@@ -1,6 +1,7 @@
 import glob
 import os
 import csv
+#import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 
 ################################################### Global #################################################
@@ -23,9 +24,19 @@ RubberPressureSensitivityPower1 = []
 
 ParaList = ["QSA", "Loadmul", "Slico", "Staco", "RPSP_Oft", "RPSP_Pw", "XBelt", "XTread", "ZBelt", "ZTread"]
 
-xAxis = []
-yAxis = []
+xAxis = []              #slipAngle
+yAxis = []              #Fy
+yAxisS = []             #Fx
+xAxis2 = []             #slipRatio
+yAxis2 = []             #Fx
 legendlabel = []
+
+WHITE = '\033[0m'  # white (normal)
+RED = '\033[31m' # red
+GREEN = '\033[32m' # green
+ORANGE = '\033[33m' # orange
+BLUE = '\033[34m' # blue
+PURPLE = '\033[35m' # purple
 
 ################################################### 0.Header #################################################
 def addHeader():
@@ -47,7 +58,7 @@ def addHeader():
     RubberPressureSensitivityPower1.append("RubberPressureSensitivityPower1")
 
 ################################################### 0.read ###################################################
-def readData(simPath):
+def readData(simPath, sb):
     for content in simPath:                
         #simSubFolder = glob.glob(content + "\\*")    
         # for subContent in simSubFolder:
@@ -55,14 +66,19 @@ def readData(simPath):
                 
         ## process parameter 
         basename = os.path.basename(content)    
-        for par in ParaList:
-            if par in basename:
-                index = basename.index(par)                        
-                #print(basename[index:])
-                for i in range(0, 200):
-                    parameter.append(basename[index:index + len(par)])
-                    parSetting.append(basename[index + len(par):])
-                break    
+        if sb != 1:
+            for par in ParaList:
+                if par in basename:
+                    index = basename.index(par)                        
+                    #print(basename[index:])
+                    for i in range(0, 200):
+                        parameter.append(basename[index:index + len(par)])
+                        parSetting.append(basename[index + len(par):])
+                    break    
+        elif sb == 1:
+            for i in range(0, 200):
+                parameter.append(basename)
+                parSetting.append("SB")                
         ## process file under folder-03
         file3 = content + "\\" + basename[3:] + "-3\\CustomRealtimeTable.csv"
         with open(file3) as csv_file:
@@ -121,7 +137,8 @@ def readData(simPath):
 
 ################################################### 0.SaveCSV ################################################
 def saveAsCSV():
-    with open('xiannong.csv', 'w', newline='') as file:
+    #with open('xiannong.csv', 'w', newline='') as file:
+    with open(csvPath, 'w', newline='') as file:
         writer = csv.writer(file)
         #writer.writerows([slipAngle,slipRatio,StaticBaseCoefficient,SlidingBaseCoefficient,LoadVsDeflectionMultiplier,BeltSpringX,BeltSpringZ,TreadSpringXPerUnitArea,TreadSpringZPerUnitArea,RubberPressureSensitivityPower0,RubberPressureSensitivityPower1,Fy,Mz,Fx])
         line_count = 0
@@ -129,12 +146,12 @@ def saveAsCSV():
             #writer.writerow([slipAngle[line_count], axisY[line_count]])
             writer.writerow([parameter[line_count], parSetting[line_count], slipAngle[line_count],slipRatio[line_count],StaticBaseCoefficient[line_count],SlidingBaseCoefficient[line_count],LoadVsDeflectionMultiplier[line_count],BeltSpringX[line_count],BeltSpringZ[line_count],TreadSpringXPerUnitArea[line_count],TreadSpringZPerUnitArea[line_count],RubberPressureSensitivityPower0[line_count],RubberPressureSensitivityPower1[line_count],Fy[line_count],Mz[line_count],Fx[line_count]])
             line_count += 1
+        print(GREEN + csvPath + " created!" + WHITE)
 
 ################################################### readCSV ##################################################
 def readCSV():
-    path = r".\xiannong.csv"
-    if os.path.exists(path):
-        with open(path) as csv_file:
+    if os.path.exists(csvPath):
+        with open(csvPath) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             line_count = 0
 
@@ -149,7 +166,7 @@ def readCSV():
                     Fx.append(row[15])
                 line_count += 1             
     else:
-        print("xiannong.csv doesn't exist, please excute 0 for first run.")
+        print(RED + savedFile + " doesn't exist, please excute 0 for first run." + WHITE)
         clearList()
         menu()
 
@@ -164,7 +181,7 @@ def pickPar(number):
 
     ## QSA
     if(ParaList[0] not in parameter):
-        print(ParaList[0] + " doesn't exist in xiannong!!!")   
+        print(ParaList[0] + " doesn't exist in " + savedFile)   
         clearList()
         menu()
     else:
@@ -172,10 +189,12 @@ def pickPar(number):
         legendlabel.append(ParaList[0])
         xAxis = slipAngle[startIndex:startIndex + 200]
         yAxis = Fy[startIndex:startIndex + 200]
-
+        yAxisS = Mz[startIndex:startIndex + 200]
+        xAxis2 = slipRatio[startIndex:startIndex + 200]
+        yAxis2 = Fx[startIndex:startIndex + 200]
     ## others
     if(ParaList[number] not in parameter):
-        print(ParaList[number] + " doesn't exist in xiannong!!!")   
+        print(ParaList[number] + " doesn't exist in " + savedFile)   
     else:
         startIndex = parameter.index(ParaList[number])     
         for i in range(startIndex, len(parameter)):
@@ -188,16 +207,33 @@ def pickPar(number):
             legendlabel.append(ParaList[number] + "_" + parSetting[i * 200 + startIndex])            
             xAxis.extend(slipAngle[startIndex + i * 200 : startIndex + i * 200 + 200])
             yAxis.extend(Fy[startIndex + i * 200 : startIndex + i * 200 + 200])
+            yAxisS.extend(Mz[startIndex + i * 200 : startIndex + i * 200 + 200])
+            xAxis2.extend(slipRatio[startIndex + i * 200 : startIndex + i * 200 + 200])
+            yAxis2.extend(Fx[startIndex + i * 200 : startIndex + i * 200 + 200])
             #print(str(startIndex + i * 200 ) + ":" + str(startIndex + i * 200 + 200))
 
-    fig, ax = plt.subplots()
-    #ax.set_title('Title!')
+    ## Plot
+    fig, axes = plt.subplots(3, figsize = (18,8))
+    plt.subplots_adjust(bottom=0.06, top=0.94, left=0.06, right=0.88, hspace=0.35, wspace=0.35)
+
+    ax = axes[0]
+    ax1 = axes[1]
+    ax2 = axes[2]
+    
+    ax.set_title('slipAngle - Fy')
+    ax1.set_title('slipAngle - Mz')
+    ax2.set_title('slipRatio - Fx')
     ax.grid()
+    ax1.grid()
+    ax2.grid()
 
     lines = []
+    lines1 = []
+    lines2 = []
+
     x = []
     y = []
-    
+    # Plot1
     for i in range(0, lineNo + 1):
         x.clear()
         y.clear()    
@@ -205,23 +241,72 @@ def pickPar(number):
         for j in range(0, 200):
             x.append(float(xAxis[i * 200 + j]))            
             y.append(float(yAxis[i * 200 + j]))  
-        line, = ax.plot(x, y, lw = 1, label = lineLabel)
+        if i == 0:       
+            line, = ax.plot(x, y, lw = 1, linestyle = '--', label = lineLabel)
+        else:
+            line, = ax.plot(x, y, lw = 1, label = lineLabel)
+
+        #line, = ax.plot(x, y, lw = 1, label = lineLabel)
         lines.append(line)
+    # Plot2
+    for i in range(0, lineNo + 1):
+        x.clear()
+        y.clear()    
+        lineLabel = legendlabel[i]        
+        for j in range(0, 200):
+            x.append(float(xAxis[i * 200 + j]))            
+            y.append(float(yAxisS[i * 200 + j]))  
+        if i == 0:       
+            line, = ax1.plot(x, y, lw = 1, linestyle = '--', label = lineLabel)
+        else:
+            line, = ax1.plot(x, y, lw = 1, label = lineLabel)
 
-    leg = ax.legend(fancybox=True, shadow=True)
+        #line, = ax.plot(x, y, lw = 1, label = lineLabel)
+        lines1.append(line)
+    # Plot3
+    for i in range(0, lineNo + 1):
+        x.clear()
+        y.clear()    
+        lineLabel = legendlabel[i]        
+        for j in range(0, 200):
+            x.append(float(xAxis2[i * 200 + j]))            
+            y.append(float(yAxis2[i * 200 + j]))  
+        if i == 0:       
+            line, = ax2.plot(x, y, lw = 1, linestyle = '--', label = lineLabel)
+        else:
+            line, = ax2.plot(x, y, lw = 1, label = lineLabel)
 
+        lines2.append(line)
+
+    # on_pick via legend
+    #leg = ax2.legend(fancybox=True, shadow=True, loc='upper right')
+    leg = ax1.legend(fancybox=True, shadow=True, bbox_to_anchor=(1,1), loc="upper left")
+    
     lined = {}  # Will map legend lines to original lines.
+    lined1 = {}  # Will map legend lines to original lines.
+    lined2 = {}  # Will map legend lines to original lines.
+
     for legline, origline in zip(leg.get_lines(), lines):
         legline.set_picker(True)  # Enable picking on the legend line.
         lined[legline] = origline
+    for legline, origline in zip(leg.get_lines(), lines1):
+        legline.set_picker(True)  # Enable picking on the legend line.
+        lined1[legline] = origline
+    for legline, origline in zip(leg.get_lines(), lines2):
+        legline.set_picker(True)  # Enable picking on the legend line.
+        lined2[legline] = origline
 
     def on_pick(event):
         # On the pick event, find the original line corresponding to the legend
         # proxy line, and toggle its visibility.
         legline = event.artist
         origline = lined[legline]
+        origline1 = lined1[legline]
+        origline2 = lined2[legline]
         visible = not origline.get_visible()
         origline.set_visible(visible)
+        origline1.set_visible(visible)
+        origline2.set_visible(visible)
         # Change the alpha on the line in the legend so we can see what lines
         # have been toggled.
         legline.set_alpha(1.0 if visible else 0.2)
@@ -229,65 +314,111 @@ def pickPar(number):
 
     fig.canvas.mpl_connect('pick_event', on_pick)
     plt.show()
-    #return lineNo
-    # print(legendlabel)
-    # print(lineNo)
 
-    # print(startIndex)
-    # print(stopIndex)
+################################################### SpecialSB ################################################
+def special_SB():
+    sbFolder = glob.glob(fullpath + "\*")
+    count = len(sbFolder)
+
+    for subfolder in sbFolder:
+        print(BLUE + subfolder + WHITE)
+
+    print(GREEN + str(len(sbFolder)) + " folders found!" )
+    print("Conventing data for Matlab................................................................:" + WHITE)
     
-    # print(str(len(legendlabel)) + "; " + str(len(xAxis)) + "; " + str(len(yAxis)))
+    addHeader()
+    readData(sbFolder, 1)
+    saveAsCSV()
 
-    # with open('test.csv', 'w', newline='') as file:
-    #     writer = csv.writer(file)
-    #     line_count = 0
-    #     for row in xAxis:
-    #         writer.writerow([xAxis[line_count], yAxis[line_count]])
-    #         line_count += 1
+    parameter.remove("parameter")
+    parSetting.remove("setting")
+    slipAngle.remove("slipAngle")
+    slipRatio.remove("slipRatio")
+    Fy.remove("Fy")
+    Mz.remove("Mz")
+    Fx.remove("Fx")
 
-################################################### Plot #####################################################
-def plot(count):
-    fig, ax = plt.subplots()
-    #ax.set_title('Title!')
+    # Plot
+    fig, axes = plt.subplots(3, figsize = (18,8))
+    plt.subplots_adjust(bottom=0.06, top=0.94, left=0.06, right=0.88, hspace=0.35, wspace=0.35)
+
+    ax = axes[0]
+    ax1 = axes[1]
+    ax2 = axes[2]
+    
+    ax.set_title('slipAngle - Fy')
+    ax1.set_title('slipAngle - Mz')
+    ax2.set_title('slipRatio - Fx')
     ax.grid()
+    ax1.grid()
+    ax2.grid()
 
     lines = []
+    lines1 = []
+    lines2 = []
+
     x = []
     y = []
-    
-    for i in range(0, count + 1):
+    # Plot1
+    for i in range(0, count):
         x.clear()
-        y.clear()
-        #lineLabel = parameter[i * 200 + 1] + "_" + parSetting[i * 200 + 1]
-        lineLabel = legendlabel[i]
-        x = xAxis[i * 200 : i * 200 + 200]
-        y = yAxis[i * 200 : i * 200 + 200]
-        #print(xAxis)
-        # for var in x:
-        #     var = float(var)
-        #     print(var)
-        # for var in y:
-        #     var = float(var)
-        #for j in range(0, 200):
-            #x.append(float(xAxis[i * 200 + j]))            
-            #y.append(float(yAxis[i * 200 + j]))            
-        line, = ax.plot(x, y, lw = 0.5, label = lineLabel)
+        y.clear()    
+        lineLabel = parameter[i * 200]        
+        for j in range(0, 200):
+            x.append(float(slipAngle[i * 200 + j]))            
+            y.append(float(Fy[i * 200 + j]))  
+        line, = ax.plot(x, y, lw = 1, label = lineLabel)
         lines.append(line)
+    # Plot2
+    for i in range(0, count):
+        x.clear()
+        y.clear()    
+        lineLabel = parameter[i * 200]        
+        for j in range(0, 200):
+            x.append(float(slipAngle[i * 200 + j]))            
+            y.append(float(Mz[i * 200 + j]))  
+        line, = ax1.plot(x, y, lw = 1, label = lineLabel)
+        lines1.append(line)
+    # Plot3
+    for i in range(0, count):
+        x.clear()
+        y.clear()    
+        lineLabel = parameter[i * 200]        
+        for j in range(0, 200):
+            x.append(float(slipRatio[i * 200 + j]))            
+            y.append(float(Fx[i * 200 + j]))  
+        line, = ax2.plot(x, y, lw = 1, label = lineLabel)
+        lines2.append(line)
 
-    leg = ax.legend(fancybox=True, shadow=True)
-
+    # on_pick via legend
+    #leg = ax2.legend(fancybox=True, shadow=True, loc='upper right')
+    leg = ax1.legend(fancybox=True, shadow=True, bbox_to_anchor=(1,1), loc="upper left")
+    
     lined = {}  # Will map legend lines to original lines.
+    lined1 = {}  # Will map legend lines to original lines.
+    lined2 = {}  # Will map legend lines to original lines.
+
     for legline, origline in zip(leg.get_lines(), lines):
         legline.set_picker(True)  # Enable picking on the legend line.
         lined[legline] = origline
+    for legline, origline in zip(leg.get_lines(), lines1):
+        legline.set_picker(True)  # Enable picking on the legend line.
+        lined1[legline] = origline
+    for legline, origline in zip(leg.get_lines(), lines2):
+        legline.set_picker(True)  # Enable picking on the legend line.
+        lined2[legline] = origline
 
     def on_pick(event):
         # On the pick event, find the original line corresponding to the legend
         # proxy line, and toggle its visibility.
         legline = event.artist
         origline = lined[legline]
+        origline1 = lined1[legline]
+        origline2 = lined2[legline]
         visible = not origline.get_visible()
         origline.set_visible(visible)
+        origline1.set_visible(visible)
+        origline2.set_visible(visible)
         # Change the alpha on the line in the legend so we can see what lines
         # have been toggled.
         legline.set_alpha(1.0 if visible else 0.2)
@@ -296,21 +427,6 @@ def plot(count):
     fig.canvas.mpl_connect('pick_event', on_pick)
     plt.show()
 
-################################################### Exit #####################################################
-def exitHold():
-    # hold on when done
-    inputStr = ""
-    try:
-        inputStr = input("Exit with any key, back to Menu with B:")
-    except ValueError:
-        print("error input!")
-
-    if inputStr == "b" or inputStr == "B":
-        clearList()
-        menu()
-    else:
-        print("exit!")
-        
 ################################################### Clear ####################################################
 def clearList():
     parameter.clear()
@@ -332,61 +448,95 @@ def clearList():
 
     xAxis.clear() 
     yAxis.clear() 
+    yAxisS.clear() 
+    xAxis2.clear() 
+    yAxis2.clear() 
     legendlabel.clear() 
 
 ################################################### Menu #####################################################
 def menu():
     optionNo = ""
-    showStr = "execute with Num:\r\n"
-    showStr += "0. Convent data for Matlab --> xiannong.csv\r\n"
-    showStr += "1. Plot slipAngle - Fy, Parameter = Loadmul\r\n"
-    showStr += "2. Plot slipAngle - Fy, Parameter = Slico\r\n"
-    showStr += "3. Plot slipAngle - Fy, Parameter = Staco\r\n"
-    showStr += "4. Plot slipAngle - Fy, Parameter = RPSP_Oft\r\n"
-    showStr += "5. Plot slipAngle - Fy, Parameter = RPSP_Pw\r\n"
-    showStr += "6. Plot slipAngle - Fy, Parameter = XBelt\r\n"
-    showStr += "7. Plot slipAngle - Fy, Parameter = XTread\r\n"
-    showStr += "8. Plot slipAngle - Fy, Parameter = ZBelt\r\n"
-    showStr += "9. Plot slipAngle - Fy, Parameter = ZTread\r\n"
+    showStr = "=============================================================\r\n"
+    showStr += "Execution by choosing following command (number or letter): \r\n"
+    showStr += "=============================================================\r\n"
+    showStr += "0. Convent data for Matlab\r\n"
+    showStr += "-------------------------------------------------------------\r\n"
+    showStr += "1. Loadmul\r\n"
+    showStr += "2. Slico\r\n"
+    showStr += "3. Staco\r\n"
+    showStr += "4. RPSP_Oft\r\n"
+    showStr += "5. RPSP_Pw\r\n"
+    showStr += "6. XBelt\r\n"
+    showStr += "7. XTread\r\n"
+    showStr += "8. ZBelt\r\n"
+    showStr += "9. ZTread\r\n"
+    showStr += "-------------------------------------------------------------\r\n"
+    showStr += "S. Special or SB\r\n"
+    showStr += "-------------------------------------------------------------\r\n"
+    showStr += "Q. Quit\r\n"
+    showStr += "=============================================================\r\n"
 
     try:
-        #inputStr = input("Run with any key, abort with key n: ")
         optionNo = input(showStr)
     except ValueError:
-        print("error input!")
+        print(RED + "error input!" + WHITE)
         
-    ### 0. Convent data for Matlab --> xiannong.csv   
+    ### 0. Convent data for Matlab
     if optionNo == "0":
-        simFolder = glob.glob(r".\sample\RT\*")
-        #simFolder = glob.glob(r".\ANN_R15x8_CM004_Slick_2017\*")
-        count = len(simFolder)
+        simFolder = glob.glob(fullpath + "\*")
+        #count = len(simFolder)
 
         for subfolder in simFolder:
-            print(subfolder)
+            print(BLUE + subfolder + WHITE)
 
-        print(str(len(simFolder)) + " folders found!")
-        print("Conventing data for Matlab................................................................:")
+        print(GREEN + str(len(simFolder)) + " folders found!" )
+        print("Conventing data for Matlab................................................................:" + WHITE)
         
         addHeader()
-        readData(simFolder)
+        readData(simFolder, 0)
         saveAsCSV()
-        print("Created xiannong.csv!!!")
-
-        exitHold()
-
+        clearList()
+        menu()
+    
+    ### 1 - 9. Plots with parameters   
     elif optionNo == "1" or optionNo == "2" or optionNo == "3" or optionNo == "4" or optionNo == "5" or optionNo == "6" or optionNo == "7" or optionNo == "8" or optionNo == "9":
         readCSV()
-        lineCount = pickPar(int(optionNo))
-        # print(lineCount)
-        # print(xAxis)
+        pickPar(int(optionNo))
+        clearList()
+        menu()
 
-        # if (lineCount > 0):
-        #     plot(lineCount)
-        exitHold()
+    ### Special or SB
+    elif optionNo == "s" or optionNo == "S":
+        special_SB()
+        clearList()
+        menu()
 
+    ### Quit
+    elif optionNo == "q" or optionNo == "Q":
+        exit()
     else:
-        print("Please input the correct number!!!")
+        print(RED + "Please choose one of the following commands!!!" + WHITE)
+        clearList()
         menu()
 
 ################################################### Main #####################################################
-menu()
+
+# ask for work folder
+inFolderName = ""
+try:
+    inFolderName = input("Folder name = ")
+except ValueError:
+    print("error input!")
+
+# generate fullpath, csv basename and csv fullname
+fullpath = os.getcwd() + "\\" + inFolderName
+savedFile = inFolderName + ".csv"
+csvPath = os.getcwd() + "\\" + savedFile
+
+# check if input work folder exists
+if os.path.exists(fullpath):
+    print(GREEN + "Workspace = " + fullpath + WHITE)
+    menu()
+else:
+    print(RED + fullpath + " doesn't exist!" + WHITE)
+
