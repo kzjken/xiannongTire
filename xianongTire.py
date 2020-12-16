@@ -77,7 +77,7 @@ def readData(simPath, sb):
                     break    
         elif sb == 1:
             for i in range(0, 200):
-                parameter.append(basename)
+                parameter.append(basename[28:])
                 parSetting.append("SB")                
         ## process file under folder-03
         file3 = content + "\\" + basename[3:] + "-3\\CustomRealtimeTable.csv"
