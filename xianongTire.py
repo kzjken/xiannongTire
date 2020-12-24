@@ -21,7 +21,9 @@ TreadSpringXPerUnitArea = []
 TreadSpringZPerUnitArea = [] 
 RubberPressureSensitivityPower0 = [] 
 RubberPressureSensitivityPower1 = [] 
-
+FyNorm = []                 
+MzNorm = []                 
+FxNorm = []                 
 ParaList = ["QSA", "Loadmul", "Slico", "Staco", "RPSP_Oft", "RPSP_Pw", "XBelt", "XTread", "ZBelt", "ZTread"]
 
 xAxis = []              #slipAngle
@@ -47,6 +49,9 @@ def addHeader():
     Fy.append("Fy")
     Mz.append("Mz")
     Fx.append("Fx")
+    # FyNorm.append("FyNorm")
+    # MzNorm.append("MzNorm")
+    # FxNorm.append("FxNorm")    
     StaticBaseCoefficient.append("StaticBaseCoefficient")
     SlidingBaseCoefficient.append("SlidingBaseCoefficient")
     LoadVsDeflectionMultiplier.append("LoadVsDeflectionMultiplier")
@@ -135,6 +140,38 @@ def readData(simPath, sb):
                         for i in range(0, 200):
                             RubberPressureSensitivityPower1.append(line.split("=",)[1].split(",",)[1])    
 
+################################################### 0.norm ###################################################
+def normData():
+    for i in range (1, len(Fy)):
+        FyNorm.append(float(Fy[i]))
+        MzNorm.append(float(Mz[i]))
+        FxNorm.append(float(Fx[i]))
+
+    if (abs(min(FyNorm)) < abs(max(FyNorm))):
+        ymax = abs(max(FyNorm))
+    else:
+        ymax = abs(min(FyNorm))
+    for yCounter in range (0, len(FyNorm)):
+            FyNorm[yCounter] = FyNorm[yCounter] / ymax
+
+    if (abs(min(MzNorm)) < abs(max(MzNorm))):
+        ymax = abs(max(MzNorm))
+    else:
+        ymax = abs(min(MzNorm))
+    for yCounter in range (0, len(MzNorm)):
+            MzNorm[yCounter] = MzNorm[yCounter] / ymax
+
+    if (abs(min(FxNorm)) < abs(max(FxNorm))):
+        ymax = abs(max(FxNorm))
+    else:
+        ymax = abs(min(FxNorm))
+    for yCounter in range (0, len(FxNorm)):
+            FxNorm[yCounter] = FxNorm[yCounter] / ymax
+    
+    FyNorm.insert(0, 'FyNorm')
+    MzNorm.insert(0, 'MzNorm')
+    FxNorm.insert(0, 'FxNorm')
+
 ################################################### 0.SaveCSV ################################################
 def saveAsCSV():
     #with open('xiannong.csv', 'w', newline='') as file:
@@ -144,7 +181,7 @@ def saveAsCSV():
         line_count = 0
         for row in slipAngle:
             #writer.writerow([slipAngle[line_count], axisY[line_count]])
-            writer.writerow([parameter[line_count], parSetting[line_count], slipAngle[line_count],slipRatio[line_count],StaticBaseCoefficient[line_count],SlidingBaseCoefficient[line_count],LoadVsDeflectionMultiplier[line_count],BeltSpringX[line_count],BeltSpringZ[line_count],TreadSpringXPerUnitArea[line_count],TreadSpringZPerUnitArea[line_count],RubberPressureSensitivityPower0[line_count],RubberPressureSensitivityPower1[line_count],Fy[line_count],Mz[line_count],Fx[line_count]])
+            writer.writerow([parameter[line_count], parSetting[line_count], slipAngle[line_count],slipRatio[line_count],StaticBaseCoefficient[line_count],SlidingBaseCoefficient[line_count],LoadVsDeflectionMultiplier[line_count],BeltSpringX[line_count],BeltSpringZ[line_count],TreadSpringXPerUnitArea[line_count],TreadSpringZPerUnitArea[line_count],RubberPressureSensitivityPower0[line_count],RubberPressureSensitivityPower1[line_count],Fy[line_count],Mz[line_count],Fx[line_count],FyNorm[line_count],MzNorm[line_count],FxNorm[line_count]])
             line_count += 1
         print(GREEN + csvPath + " created!" + WHITE)
 
@@ -161,9 +198,9 @@ def readCSV():
                     parSetting.append(row[1])         
                     slipAngle.append(row[2])
                     slipRatio.append(row[3])
-                    Fy.append(row[13])  
-                    Mz.append(row[14])  
-                    Fx.append(row[15])
+                    Fy.append(row[16])  
+                    Mz.append(row[17])  
+                    Fx.append(row[18])
                 line_count += 1             
     else:
         print(RED + savedFile + " doesn't exist, please excute 0 for first run." + WHITE)
@@ -240,7 +277,7 @@ def pickPar(number):
         lineLabel = legendlabel[i]        
         for j in range(0, 200):
             x.append(float(xAxis[i * 200 + j]))            
-            y.append(float(yAxis[i * 200 + j]))  
+            y.append(float(yAxis[i * 200 + j]))          
         if i == 0:       
             line, = ax.plot(x, y, lw = 1, linestyle = '--', label = lineLabel)
         else:
@@ -270,7 +307,7 @@ def pickPar(number):
         lineLabel = legendlabel[i]        
         for j in range(0, 200):
             x.append(float(xAxis2[i * 200 + j]))            
-            y.append(float(yAxis2[i * 200 + j]))  
+            y.append(float(yAxis2[i * 200 + j]))   
         if i == 0:       
             line, = ax2.plot(x, y, lw = 1, linestyle = '--', label = lineLabel)
         else:
@@ -328,6 +365,7 @@ def special_SB():
     
     addHeader()
     readData(sbFolder, 1)
+    normData()
     saveAsCSV()
 
     parameter.remove("parameter")
@@ -436,6 +474,9 @@ def clearList():
     Fy.clear()                 #3-38 2-201
     Mz.clear()                 #3-39 2-201
     Fx.clear()                 #5-37 98-297
+    FyNorm.clear()
+    MzNorm.clear()
+    FxNorm.clear()
     StaticBaseCoefficient.clear() 
     SlidingBaseCoefficient.clear() 
     LoadVsDeflectionMultiplier.clear() 
@@ -494,6 +535,7 @@ def menu():
         
         addHeader()
         readData(simFolder, 0)
+        normData()              
         saveAsCSV()
         clearList()
         menu()
