@@ -4,6 +4,8 @@ import csv
 #import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 
+### pyinstaller -F xianongTire.py
+
 ################################################### Global #################################################
 parameter = []
 parSetting = []
