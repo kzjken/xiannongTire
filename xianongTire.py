@@ -143,33 +143,61 @@ def readData(simPath, sb):
                             RubberPressureSensitivityPower1.append(line.split("=",)[1].split(",",)[1])    
 
 ################################################### 0.norm ###################################################
-def normData():
+def normData(folderNo):
     for i in range (1, len(Fy)):
         FyNorm.append(float(Fy[i]))
         MzNorm.append(float(Mz[i]))
         FxNorm.append(float(Fx[i]))
 
-    if (abs(min(FyNorm)) < abs(max(FyNorm))):
-        ymax = abs(max(FyNorm))
-    else:
-        ymax = abs(min(FyNorm))
-    for yCounter in range (0, len(FyNorm)):
-            FyNorm[yCounter] = FyNorm[yCounter] / ymax
+    subList = []
+    for i in range(folderNo):
+        subList.clear()
+        for orgIndex in range (i * 200, i * 200 + 200):
+            subList.append(FyNorm[orgIndex])
+        print(len(subList))#debug
 
-    if (abs(min(MzNorm)) < abs(max(MzNorm))):
-        ymax = abs(max(MzNorm))
-    else:
-        ymax = abs(min(MzNorm))
-    for yCounter in range (0, len(MzNorm)):
-            MzNorm[yCounter] = MzNorm[yCounter] / ymax
+        if (abs(min(subList)) < abs(max(subList))):
+            maxOfSubList = abs(max(subList))
+        else:
+            maxOfSubList = abs(min(subList))
 
-    if (abs(min(FxNorm)) < abs(max(FxNorm))):
-        ymax = abs(max(FxNorm))
-    else:
-        ymax = abs(min(FxNorm))
-    for yCounter in range (0, len(FxNorm)):
-            FxNorm[yCounter] = FxNorm[yCounter] / ymax
-    
+        for subListIndex in range (0, len(subList)):
+            subList[subListIndex] = subList[subListIndex] / maxOfSubList
+        for orgIndex in range (i * 200, i * 200 + 200):
+            FyNorm[orgIndex] = subList[orgIndex - i * 200]
+
+    subList = []
+    for i in range(folderNo):
+        subList.clear()
+        for orgIndex in range (i * 200, i * 200 + 200):
+            subList.append(MzNorm[orgIndex])
+        print(len(subList))#debug
+
+        if (abs(min(subList)) < abs(max(subList))):
+            maxOfSubList = abs(max(subList))
+        else:
+            maxOfSubList = abs(min(subList))
+        for subListIndex in range (0, len(subList)):
+            subList[subListIndex] = subList[subListIndex] / maxOfSubList
+        for orgIndex in range (i * 200, i * 200 + 200):
+            MzNorm[orgIndex] = subList[orgIndex - i * 200]
+
+    subList = []
+    for i in range(folderNo):
+        subList.clear()
+        for orgIndex in range (i * 200, i * 200 + 200):
+            subList.append(FxNorm[orgIndex])
+        print(len(subList))#debug
+
+        if (abs(min(subList)) < abs(max(subList))):
+            maxOfSubList = abs(max(subList))
+        else:
+            maxOfSubList = abs(min(subList))
+        for subListIndex in range (0, len(subList)):
+            subList[subListIndex] = subList[subListIndex] / maxOfSubList
+        for orgIndex in range (i * 200, i * 200 + 200):
+            FxNorm[orgIndex] = subList[orgIndex - i * 200]
+
     FyNorm.insert(0, 'FyNorm')
     MzNorm.insert(0, 'MzNorm')
     FxNorm.insert(0, 'FxNorm')
@@ -367,7 +395,7 @@ def special_SB():
     
     addHeader()
     readData(sbFolder, 1)
-    normData()
+    normData(count)
     saveAsCSV()
 
     parameter.remove("parameter")
@@ -527,7 +555,7 @@ def menu():
     ### 0. Convent data for Matlab
     if optionNo == "0":
         simFolder = glob.glob(fullpath + "\*")
-        #count = len(simFolder)
+        count = len(simFolder)
 
         for subfolder in simFolder:
             print(BLUE + subfolder + WHITE)
@@ -537,7 +565,7 @@ def menu():
         
         addHeader()
         readData(simFolder, 0)
-        normData()              
+        normData(count)              
         saveAsCSV()
         clearList()
         menu()
